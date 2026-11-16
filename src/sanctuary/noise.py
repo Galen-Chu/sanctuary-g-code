@@ -21,7 +21,7 @@ def _ihash2(x: int, y: int) -> float:
 
 
 def clamp(x: float, lo: float, hi: float) -> float:
-    return lo if x < lo else hi if x > hi else x
+    return lo if x < lo else min(x, hi)
 
 
 def mix(a: float, b: float, t: float) -> float:

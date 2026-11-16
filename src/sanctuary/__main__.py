@@ -7,7 +7,6 @@ import hashlib
 import sys
 from pathlib import Path
 
-from . import __version__
 from .generate import generate
 from .presets import PRESETS
 from .toml_out import scenario_toml
@@ -34,8 +33,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.list_presets:
         for name in sorted(PRESETS):
             p = PRESETS[name]
-            print(f"{name:12} {p.width:g}x{p.height:g}  food={p.food_count} water={p.water_count} "
-                  f"hazards={p.permanent_hazards}+{p.patrols}p  {p.description}")
+            print(
+                f"{name:12} {p.width:g}x{p.height:g}  food={p.food_count} water={p.water_count} "
+                f"hazards={p.permanent_hazards}+{p.patrols}p  {p.description}"
+            )
         return 0
 
     world = generate(args.seed, PRESETS[args.preset])

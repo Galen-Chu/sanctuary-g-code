@@ -25,8 +25,7 @@ _BASE = 20261110  # abyssal-garden's own default seed
 
 def _fmt(v: float) -> str:
     """Match JS String(number): shortest round-trip, integral floats print bare."""
-    s = repr(v)
-    return s[:-2] if s.endswith(".0") else s
+    return repr(v).removesuffix(".0")
 
 
 # (a) 20 draws from the default seed

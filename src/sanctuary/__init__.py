@@ -21,6 +21,6 @@ __all__ = [
     "Shelter",
     "WaterSource",
     "World",
-    "generate",
     "__version__",
+    "generate",
 ]

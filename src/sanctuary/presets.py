@@ -37,7 +37,9 @@ PRESETS: dict[str, Preset] = {
     # Balanced default, closest in spirit to Unbodysoma's hand-authored grid_72h.
     "meadow": Preset(
         name="meadow",
-        description="Balanced foraging world: five patches, two springs, one shelter, one barren danger zone, two daily patrols",
+        description=(
+            "Balanced foraging world: five patches, two springs, one shelter, one barren danger zone, two daily patrols"
+        ),
         width=20.0,
         height=20.0,
         food_count=5,
@@ -47,7 +49,9 @@ PRESETS: dict[str, Preset] = {
     # Named for the source project's kelp basin.
     "kelp-basin": Preset(
         name="kelp-basin",
-        description="Dense clustered food, four daily patrols, no permanent hazard — pressure comes from visitors, not terrain",
+        description=(
+            "Dense clustered food, four daily patrols, no permanent hazard — pressure comes from visitors, not terrain"
+        ),
         width=24.0,
         height=24.0,
         food_count=7,
