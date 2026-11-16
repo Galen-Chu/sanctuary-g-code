@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sanctuary-g-code"
+version = "0.1.0"
+description = "Deterministic procedural world generator — a sanctuary for embodied minds; emits Unbodysoma-compatible scenario TOML"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Galen Chu" }]
+keywords = ["procedural-generation", "worldgen", "simulation", "unbodysoma"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "mypy>=1.11"]
+
+[project.scripts]
+sanctuary = "sanctuary.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
