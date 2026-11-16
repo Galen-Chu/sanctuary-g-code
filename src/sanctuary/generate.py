@@ -20,6 +20,7 @@ without shifting any other stage's numbers.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from math import hypot
 
 from .noise import clamp, fbm2
@@ -42,14 +43,14 @@ _DAY_S = 86400.0
 _START_HOUR = 8.0
 
 
-def _fertility(preset: Preset):
+def _fertility(preset: Preset) -> Callable[[float, float], float]:
     def field(x: float, y: float) -> float:
         return fbm2(x * preset.fertility_scale + 3.7, y * preset.fertility_scale + 9.1, 4)
 
     return field
 
 
-def _wetness():
+def _wetness() -> Callable[[float, float], float]:
     def field(x: float, y: float) -> float:
         return fbm2(x * 0.045 + 47.3, y * 0.045 + 21.9, 3)
 
@@ -63,7 +64,7 @@ def _too_close(x: float, y: float, pts: list[tuple[float, float]], gap: float) -
 
 def _sample(
     r: Stream,
-    field,
+    field: Callable[[float, float], float],
     count: int,
     w: float,
     h: float,
@@ -160,7 +161,7 @@ def generate(seed: int, preset: Preset) -> World:
 
 def _place_permanent(
     r: Stream,
-    fertility,
+    fertility: Callable[[float, float], float],
     w: float,
     h: float,
     water_pts: list[tuple[float, float]],
