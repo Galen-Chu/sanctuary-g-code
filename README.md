@@ -59,7 +59,7 @@ pip install -e ".[dev]"
 
 sanctuary --list-presets
 sanctuary --seed 1 --preset meadow --out world.toml
-python -m pytest                                     # 23 tests, 含 golden 決定論與 JS 血統比對
+python -m pytest                                     # 24 tests, 含 golden 決定論與 JS 血統比對
 ```
 
 不裝也行：`PYTHONPATH=src python -m sanctuary …`（PowerShell：`$env:PYTHONPATH="src"`）。
@@ -96,11 +96,13 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 
 ## 🗺️ Roadmap
 
-- [x] **Phase 1（本骨架）**：決定論 2D 世界生成、Unbodysoma TOML 轉接器、golden 測試、CI
-- [ ] **Phase 2**：統計不變量（跨種子的分布層級驗收）；族群模式（一次生成 N 個世界）；掠食者行程的策略庫
+- [x] **Phase 1（本骨架，2026-11-16）**：決定論 2D 世界生成、Unbodysoma TOML 轉接器（端到端驗證）、preset 版本化、golden 測試＋JS 血統常數、mypy strict CI
+- [ ] **Phase 2**：統計不變量（跨種子的分布層級驗收）；族群模式（一次生成 N 個世界）；掠食者行程的策略庫——**與 Unbodysoma 族群執行器組裝成 M1「N 個體 × M 世界」**
 - [ ] **Phase 3**：地形場（可通行性影響植放）；資源季節動態；更豐富的 preset
 - [ ] **Phase 4**：3D 密度場（高度場輸出）＋ WebGPU 預覽頁（abyssal-garden 血統的歸宿）
 - [ ] **Phase 5**：品質分層與基準（比照來源專案的自適應策略）
+
+跨階段的具體工作項、生態整合與工程債見 **[docs/BACKLOG.md](docs/BACKLOG.md)**（2026-11-16 盤點歸檔）；設計層的未決問題見 [DESIGN.md](docs/DESIGN.md) §8。
 
 細節與開放問題見 [docs/DESIGN.md](docs/DESIGN.md)。
 
