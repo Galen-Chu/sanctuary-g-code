@@ -146,6 +146,7 @@ def generate(seed: int, preset: Preset) -> World:
     return World(
         name=f"{preset.name}_s{seed}",
         preset=preset.name,
+        preset_version=preset.version,
         seed=seed,
         width=w,
         height=h,

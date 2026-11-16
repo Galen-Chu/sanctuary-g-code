@@ -27,6 +27,10 @@ class Preset:
     min_food_gap: float = 5.0  # minimum distance between food patches (cells)
     min_water_gap: float = 6.0
     hazard_clearance: float = 3.0  # permanent hazards keep this far from water/shelter
+    # Provenance contract (docs/DESIGN.md §2 item 5): bump when any number or
+    # generation semantic of this preset changes. Old worlds record the revision
+    # that made them; regenerating one after a bump means checking out that commit.
+    version: int = 1
 
 
 PRESETS: dict[str, Preset] = {

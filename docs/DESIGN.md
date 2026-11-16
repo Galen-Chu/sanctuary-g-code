@@ -48,6 +48,12 @@
 4. **定位格式化輸出**：浮點數一律 `_f()`（6 位小數、去尾零）；檔案一律
    LF（`.gitattributes` 強制）。golden test（`tests/golden/meadow_seed1.toml`）
    以逐位元比對把整條鏈釘死。
+5. **Preset 版本化**（2026-11-16 定案，原開放問題 2）：每個 preset 帶
+   `version`（改任何數字或生成語意時 bump），`World` 記錄
+   `preset_version`，輸出檔頭以 `preset=<名稱>@<版本>` 標注。這是
+   **provenance 契約而非時光機**：舊世界標明它由哪個修訂生成；bump 之後
+   要重現舊世界，需 checkout 當時的 commit。第一個 release tag 之前不
+   bump，v0.1.0 的所有 preset 都是 `@1`。
 
 **重生指令**寫進每個輸出檔的註解頭兩行（含版本與 `sanctuary --seed … --preset …`），
 呼應 Unbodysoma 執行紀錄 `meta.json` 保存情境原文＋SHA-256 的可追溯文化。
@@ -102,10 +108,8 @@ stdlib `tomllib` 讀回並比對鍵集；Unbodysoma 端的實測（生成檔直�
 1. **統計驗收**（Phase 2）：「同一 preset 跨 100 顆種子」該斷言哪些分布性質
    （最近水源距離的中位數、危險覆蓋率、巡邏時段覆蓋）？界線太緊會讓生成器
    為測試而生成，太鬆則失去意義。
-2. **preset 版本化**：改 preset 數字會讓舊種子長出不同的世界。世界要帶
-   preset 的版本雜湊嗎？（傾向：要——name 已含 preset 與 seed，再加版本欄位。）
-3. **地形場**（Phase 3）：可通行性目前不存在（torus 網格全域可走）。引入
+2. **地形場**（Phase 3）：可通行性目前不存在（torus 網格全域可走）。引入
    高度場後，植放規則要加「可達性」——這是 abyssal `CLEARS`（淨空保證）的
    對應物，也是它最值得抄的工程模式之一。
-4. **WebGPU 預覽**（Phase 4）：輸出格式傾向 JSON（座標＋場參數），前端以
+3. **WebGPU 預覽**（Phase 4）：輸出格式傾向 JSON（座標＋場參數），前端以
    同源雜訊常數重算場來鋪渲染——種子真正跨語言共享的那一天。

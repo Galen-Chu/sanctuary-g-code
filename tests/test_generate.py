@@ -13,6 +13,7 @@ def _check(preset_name: str, seed: int) -> None:
     preset = PRESETS[preset_name]
     w = generate(seed, preset)
     assert w.preset == preset_name
+    assert w.preset_version == preset.version
     assert w.seed == seed
     assert w.name == f"{preset_name}_s{seed}"
 

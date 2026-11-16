@@ -69,6 +69,7 @@ class World:
 
     name: str
     preset: str
+    preset_version: int
     seed: int
     width: float
     height: float

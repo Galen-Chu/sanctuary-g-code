@@ -49,6 +49,13 @@ def test_organism_seed_override() -> None:
     assert tomllib.loads(text)["scenario"]["seed"] == 99
 
 
+def test_provenance_header() -> None:
+    """The header carries the provenance stamp: preset@version, seed, reproduce line."""
+    text = scenario_toml(generate(1, PRESETS["meadow"]))
+    assert "preset=meadow@1" in text.splitlines()[0]
+    assert "Reproduce: sanctuary --seed 1 --preset meadow" in text.splitlines()[1]
+
+
 def test_golden() -> None:
     """Same seed, byte-identical output, pinned across platforms and versions."""
     from pathlib import Path
