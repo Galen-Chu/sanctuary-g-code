@@ -2,7 +2,37 @@
 
 from __future__ import annotations
 
+from sanctuary.noise import vnoise2
 from sanctuary.rng import Stream, Streams
+
+# Golden values produced by the ORIGINAL JavaScript implementation
+# (Noniv/abyssal-garden source/src/math.js, seed 20261110) on 2026-11-16 —
+# see scripts/verify_lineage.mjs. Any change that shifts one of these numbers
+# breaks the cross-language lineage contract documented in docs/DESIGN.md §2.
+_JS_DEFAULT_SEED = [
+    0.47585524804890156, 0.4372278384398669, 0.7736968537792563, 0.2937412660103291,
+    0.3471537437289953, 0.08541534398682415,
+    0.16004084376618266, 0.04646476684138179, 0.9177373840939254, 0.4236405179835856,
+    0.1357600896153599, 0.5899799983017147, 0.40731236594729125, 0.6738020302727818,
+    0.7719425074756145, 0.43280978430993855, 0.22150923125445843, 0.19588565360754728,
+    0.5040180119685829, 0.5636834793258458,
+]
+_JS_STREAM_3 = [
+    0.8550673951394856, 0.7395435720682144, 0.8102351524867117, 0.45327418902888894,
+    0.6892062439583242, 0.17674460890702903, 0.6920542125590146, 0.393347681267187,
+    0.7309054913930595, 0.048540325136855245,
+]
+_JS_NOISE = [0.7835584939909279, 0.6300746457389663, 0.896215538688004, 0.6792962265173647, 0.0]
+
+
+def test_js_lineage() -> None:
+    """The port reproduces the original JS implementation number for number."""
+    stream = Stream(20261110)
+    assert [stream.f01() for _ in range(20)] == _JS_DEFAULT_SEED
+    stream3 = Streams(20261110).stream(3)
+    assert [stream3.f01() for _ in range(10)] == _JS_STREAM_3
+    coords = ((0.3, 7.9), (-12.4, 3.1), (25.0, -8.2), (4.7, 4.7), (0.0, 0.0))
+    assert [vnoise2(x, y) for x, y in coords] == _JS_NOISE
 
 
 def test_same_seed_same_sequence() -> None:

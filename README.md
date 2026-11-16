@@ -59,7 +59,7 @@ pip install -e ".[dev]"
 
 sanctuary --list-presets
 sanctuary --seed 1 --preset meadow --out world.toml
-python -m pytest                                     # 22 tests, 含 golden 決定論測試
+python -m pytest                                     # 23 tests, 含 golden 決定論與 JS 血統比對
 ```
 
 不裝也行：`PYTHONPATH=src python -m sanctuary …`（PowerShell：`$env:PYTHONPATH="src"`）。

@@ -25,6 +25,11 @@
    `rnd`。不使用 Python `random`——stdlib 只保證 `random()` 跨版本穩定，
    且無法與未來的 JS 端（WebGPU 預覽）共享序列。同一演算法在 JS 與 Python
    對同一種子產出相同數列，這是 Phase 4 前端能重用種子的前提。
+   **已驗證（2026-11-16，Node 22）**：`scripts/verify_lineage.mjs`（函式逐字
+   複製自 abyssal-garden 的 `math.js`）與 `scripts/verify_lineage.py` 的
+   35 行輸出逐位元相同——預設種子 20261110 的前 20 個抽樣、`rseed(3)` 串流
+   的 10 個抽樣、值雜訊 z=0 切片的 5 個值。前 30 個數值已固化為
+   `test_js_lineage` 的 golden 常數，任何破壞跨語言血統的改動會在 CI 爆炸。
 2. **Per-system 串流**：系統 `i` 的串流種子為 `base + i·7919`（鏡射
    abyssal-garden 的 `rseed`）。**系統 id 是穩定契約，終身不重編**；新系統
    取下一個未用的 id，舊世界的輸出不變：
