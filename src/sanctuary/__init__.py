@@ -11,7 +11,7 @@ from .generate import generate
 from .presets import PRESETS, Preset
 from .world import FoodPatch, Hazard, Shelter, WaterSource, World
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "PRESETS",

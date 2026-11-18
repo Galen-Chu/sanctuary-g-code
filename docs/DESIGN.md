@@ -54,7 +54,10 @@
    `preset_version`，輸出檔頭以 `preset=<名稱>@<版本>` 標注。這是
    **provenance 契約而非時光機**：舊世界標明它由哪個修訂生成；bump 之後
    要重現舊世界，需 checkout 當時的 commit。第一個 release tag 之前不
-   bump，v0.1.0 的所有 preset 都是 `@1`。
+   bump（0.x 期間所有 preset 維持 `@1`）。
+6. **族群種子派生**（2026-11-18，population mode）：`--count N` 世界群中第 `i` 個
+   世界的種子恆為 `master + i`。與系統 id 同級的穩定契約——世界群裡每個世界都能
+   單獨以 `sanctuary --seed master+i --preset …` 重現，族群不需要自己的亂數流。
 
 **重生指令**寫進每個輸出檔的註解頭兩行（含版本與 `sanctuary --seed … --preset …`），
 呼應 Unbodysoma 執行紀錄 `meta.json` 保存情境原文＋SHA-256 的可追溯文化。
@@ -95,6 +98,17 @@ stdlib `tomllib` 讀回並比對鍵集；Unbodysoma 端的實測（生成檔直�
 `[scenario]` 的 `seed` 預設等於世界種子（一個數字重建一切）；實驗要解耦
 「世界差異」與「行為雜訊」時用 `--organism-seed` 覆寫。
 
+### 世界群 manifest（population mode，2026-11-18）
+
+`--count N ≥ 2` 時 CLI 寫入一個目錄：N 份情境 TOML＋一份 `population.toml`。
+manifest 是 Sanctuary 自有契約（非 Unbodysoma 鍵集，毋須雙邊同步）：`[population]`
+記錄 generator／version／preset@version／master seed／count／duration_h（覆寫時加
+organism_seed）；`[[worlds]]` 逐世界記錄 name、file、seed、該檔 SHA-256——世界群可
+作為單一單位驗證，也是 M1 實驗紀錄引用世界側 provenance 的載體（BACKLOG §2）。
+沒有時間戳：manifest 是輸入的純函數，重跑逐位元相同（golden：
+`population_meadow_seed1_count3.toml`）。`--count 1` 維持單檔／stdout 行為，
+不產生 manifest（向後相容）。
+
 ## 5. 測試策略
 
 - **單元**：RNG 決定論／獨立性／邊界；雜訊值域與格點性質；smoothstep 端點。
@@ -103,6 +117,8 @@ stdlib `tomllib` 讀回並比對鍵集；Unbodysoma 端的實測（生成檔直�
 - **Golden**：`meadow × seed 1` 的完整 TOML 逐位元比對——任何吞噬決定論的
   改動（字典序、浮點格式、串流順序）都會在此爆炸。意圖改變輸出時，重生成
   golden 並在 commit 訊息說明理由。
+- **世界群**：派生恆等式（population 第 i 個世界 == `generate(seed + i)`）、
+  manifest 鍵集與逐檔 SHA 對映、CLI 目錄模式、manifest golden。
 
 ## 6. 開放問題
 

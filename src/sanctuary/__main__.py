@@ -1,4 +1,4 @@
-"""CLI: sanctuary --seed 1 --preset meadow --out world.toml"""
+"""CLI: sanctuary --seed 1 --preset meadow --out world.toml [--count N]"""
 
 from __future__ import annotations
 
@@ -8,8 +8,27 @@ import sys
 from pathlib import Path
 
 from .generate import generate
+from .population import MANIFEST_NAME, generate_population, population_manifest, world_filename
 from .presets import PRESETS
 from .toml_out import scenario_toml
+from .world import World
+
+
+def _write(path: Path, text: str) -> None:
+    # newline="\n" keeps the bytes identical on every platform (golden tests depend on it)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+
+
+def _report(world: World, dest: str, text: str) -> None:
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    print(
+        f"{world.name}: {len(world.food)} food, {len(world.water)} water, "
+        f"{len(world.shelters)} shelter, {len(world.hazards)} hazards -> "
+        f"{dest}  sha256:{digest[:16]}",
+        file=sys.stderr,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -27,6 +46,13 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="override the scenario seed the organism's stochasticity uses (default: same as --seed)",
     )
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=1,
+        help="population mode: N worlds with seeds seed..seed+N-1 written to --out DIR "
+        "plus a population.toml manifest (default: 1, single world)",
+    )
     parser.add_argument("--list-presets", action="store_true", help="list presets and exit")
     args = parser.parse_args(argv)
 
@@ -39,22 +65,39 @@ def main(argv: list[str] | None = None) -> int:
             )
         return 0
 
-    world = generate(args.seed, PRESETS[args.preset])
-    text = scenario_toml(world, duration_h=args.hours, organism_seed=args.organism_seed)
-    if args.out == "-":
-        sys.stdout.write(text)
-    else:
-        path = Path(args.out)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        # newline="\n" keeps the bytes identical on every platform (golden tests depend on it)
-        with path.open("w", encoding="utf-8", newline="\n") as fh:
-            fh.write(text)
+    if args.count < 1:
+        parser.error("--count must be >= 1")
 
-    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    preset = PRESETS[args.preset]
+
+    if args.count == 1:
+        world = generate(args.seed, preset)
+        text = scenario_toml(world, duration_h=args.hours, organism_seed=args.organism_seed)
+        if args.out == "-":
+            sys.stdout.write(text)
+            _report(world, "stdout", text)
+        else:
+            _write(Path(args.out), text)
+            _report(world, args.out, text)
+        return 0
+
+    # Population mode: --out is a directory holding N scenarios plus the manifest.
+    if args.out == "-":
+        parser.error("--count > 1 writes a directory of files: pass --out DIR")
+    outdir = Path(args.out)
+    if outdir.exists() and not outdir.is_dir():
+        parser.error(f"--out exists and is not a directory: {outdir}")
+    worlds = generate_population(args.seed, preset, args.count)
+    texts = [scenario_toml(w, duration_h=args.hours, organism_seed=args.organism_seed) for w in worlds]
+    outdir.mkdir(parents=True, exist_ok=True)
+    for world, text in zip(worlds, texts, strict=True):
+        _write(outdir / world_filename(world), text)
+        _report(world, world_filename(world), text)
+    manifest = population_manifest(worlds, texts, duration_h=args.hours, organism_seed=args.organism_seed)
+    _write(outdir / MANIFEST_NAME, manifest)
     print(
-        f"{world.name}: {len(world.food)} food, {len(world.water)} water, "
-        f"{len(world.shelters)} shelter, {len(world.hazards)} hazards -> "
-        f"{'stdout' if args.out == '-' else args.out}  sha256:{digest[:16]}",
+        f"population {preset.name}@{preset.version}: {len(worlds)} worlds, "
+        f"seeds {worlds[0].seed}..{worlds[-1].seed} -> {outdir / MANIFEST_NAME}",
         file=sys.stderr,
     )
     return 0

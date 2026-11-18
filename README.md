@@ -59,7 +59,8 @@ pip install -e ".[dev]"
 
 sanctuary --list-presets
 sanctuary --seed 1 --preset meadow --out world.toml
-python -m pytest                                     # 24 tests, 含 golden 決定論與 JS 血統比對
+sanctuary --seed 1 --preset meadow --count 3 --out runs/worlds   # population mode：3 世界＋manifest
+python -m pytest                                     # 32 tests, 含 golden 決定論與 JS 血統比對
 ```
 
 不裝也行：`PYTHONPATH=src python -m sanctuary …`（PowerShell：`$env:PYTHONPATH="src"`）。
@@ -80,6 +81,7 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 | `sanctuary/world.py` | `World` 與實體 dataclass——Unbodysoma `world/grid.py` 的鏡像 |
 | `sanctuary/presets.py` | 預設集：meadow / kelp-basin / dryland |
 | `sanctuary/generate.py` | 生成本體：密度場＋拒絕採樣＋植放規則 |
+| `sanctuary/population.py` | 世界群模式：主種子派生 N 個世界＋`population.toml` 群級 provenance（`--count N`） |
 | `sanctuary/toml_out.py` | Unbodysoma 情境檔轉接器（相容契約） |
 | `sanctuary/__main__.py` | CLI |
 
@@ -98,11 +100,12 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 
 - [x] **Phase 1（本骨架，2026-11-16）**：決定論 2D 世界生成、Unbodysoma TOML 轉接器（端到端驗證）、preset 版本化、golden 測試＋JS 血統常數、mypy strict CI（2026-11-18 補強：py.typed、CI 跨平台矩陣＋工具釘版）
 - [ ] **Phase 2**：統計不變量（跨種子的分布層級驗收）；族群模式（一次生成 N 個世界）；掠食者行程的策略庫——**與 Unbodysoma 族群執行器組裝成 M1「N 個體 × M 世界」**
+  - [x] 族群模式（2026-11-18）：`--count N`＋`population.toml` manifest（派生規則與格式見 DESIGN §2 第 6 點／§4）
 - [ ] **Phase 3**：地形場（可通行性影響植放）；資源季節動態；更豐富的 preset
 - [ ] **Phase 4**：3D 密度場（高度場輸出）＋ WebGPU 預覽頁（abyssal-garden 血統的歸宿）
 - [ ] **Phase 5**：品質分層與基準（比照來源專案的自適應策略）
 
-跨階段的具體工作項、生態整合與工程債見 **[docs/BACKLOG.md](docs/BACKLOG.md)**（2026-11-16 盤點歸檔）；設計層的未決問題見 [DESIGN.md](docs/DESIGN.md) §8。
+跨階段的具體工作項、生態整合與工程債見 **[docs/BACKLOG.md](docs/BACKLOG.md)**（2026-11-16 盤點歸檔）；設計層的未決問題見 [DESIGN.md](docs/DESIGN.md) §6。
 
 細節與開放問題見 [docs/DESIGN.md](docs/DESIGN.md)。
 
