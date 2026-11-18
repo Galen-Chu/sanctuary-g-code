@@ -32,7 +32,7 @@ seed ──► per-system RNG streams (mulberry32)
                     ▼
               World（純資料）
                     ▼
-        轉接器：Unbodysoma TOML ·（未來：JSON、WebGPU 預覽）
+        轉接器：Unbodysoma TOML · JSON 索引／標本卡 ·（未來：完整世界 JSON、WebGPU 預覽）
 ```
 
 ## 🔒 設計原則 · Design Principles
@@ -92,8 +92,9 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 | `sanctuary/toml_out.py` | Unbodysoma 情境檔轉接器（相容契約） |
 | `sanctuary/__main__.py` | CLI |
 
-測試分三層：決定論與獨立性（`test_rng`）、生成不變量（`test_generate`：數量、邊界、
-間距、庇護所安全）、契約（`test_toml`：tomllib 往返＋golden 逐位元比對）。
+測試分層：決定論與獨立性（`test_rng`／`test_noise`）、生成不變量與架構（`test_generate`／
+`test_systems`／`test_strategies`）、契約（`test_toml`：tomllib 往返＋golden 逐位元＋能力宣告）、
+世界群與圖書館（`test_population`／`test_library`）、統計驗收（`test_stats`：理論校準帶）。
 
 ## 🔄 Related Projects · 關聯專案
 
