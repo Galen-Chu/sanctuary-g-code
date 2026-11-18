@@ -6,7 +6,7 @@
 ## 1. 生成品質、統計與架構（Phase 2 核心）
 
 - **統計驗收**（DESIGN 開放問題 1）：✅ v1 完成（2026-11-18）——`stats.py` 四項指標＋可執行理論中心（泊松參考、獨立圓盤覆蓋）×文件化因子帶；`--fingerprint` CLI；實測比值與觀察記錄入 DESIGN §5。遺留：帶寬隨理論收緊、圖論可達性量測、指紋入標本索引（架構核心）。
-- **架構核心：系統模組化＋世界原型**（2026-11-18 定案，DESIGN §1／§3）：`generate()` 固定管線拆為可註冊系統（串流 id 是既有錨點；**重組不改位元組**）；preset 升級為 archetype（系統組合＋參數，收縮＝少選系統）；原型庫查詢（`--list-presets` 強化＋JSON 索引輸出）；標本索引（(seed, archetype@version, 統計指紋)——世界是純函數，只存索引卡、按需重生成）；轉接器能力宣告（TOML／JSON 各自宣告支援語彙，超出→明確降級或報錯，DESIGN §4）。
+- **架構核心：系統模組化＋世界原型**：✅ v1 完成（2026-11-18）——`systems.py` 五註冊系統（`Generation`／`System` 介面＝DESIGN 開放問題 4 的答案，重組不改位元組：150 世界逐位元驗證）；`Preset.systems` 組合宣告（kelp-basin 收縮轉架構級）；`library.py`：`--index` 原型庫 JSON＋`--fingerprint --json` 標本卡（(seed, archetype@version, 指紋)——只存索引卡、按需重生成）；`toml_out.TOML_SYSTEMS` 能力宣告＋超出即報錯。遺留：完整世界 JSON（隨 WebGPU 預覽）、標本累積工具／specimen-g-code 攝入、第一個以註冊系統形式落地的新內容（掠食者策略庫）。
 - **世界群模式（population mode）**：✅ 完成（2026-11-18）——`--count N`＋`population.toml` manifest（群級 provenance、逐檔 SHA-256），派生規則 `master + i` 已入 DESIGN §2 第 6 點。**M1 的世界側半邊就位**。
 - **掠食者行程策略庫**（以註冊系統形式落地——模組化之後的第一個新內容）：目前只有固定時段 {11, 14, 17, 20}＋抖動一種；候選——隨機掃描（不可預測）、晝夜規律（可學習）、區域集中（迫使遷移）。每種策略應表現為行為可區分的統計特徵（給 Unbodysoma Phase 3 學習實驗當題目）。
 - **archetype 的參數面**：preset 目前是常數組合；族群層的「世界維度變異」（面積、貧瘠度、危險密度連續抽樣）可作為原型之上的分布層。

@@ -27,6 +27,13 @@ class Preset:
     min_food_gap: float = 5.0  # minimum distance between food patches (cells)
     min_water_gap: float = 6.0
     hazard_clearance: float = 3.0  # permanent hazards keep this far from water/shelter
+    # Composition (archetype, DESIGN §3): which registered systems build this
+    # world. Selection order is irrelevant — execution is always the canonical
+    # order of systems.SYSTEMS, restricted to the selection. Contraction =
+    # select fewer systems (dependencies are validated at generate time).
+    # Must stay a literal here (no import from systems.py — that would be
+    # circular); the registry test pins this default to CANONICAL_ORDER.
+    systems: tuple[str, ...] = ("food", "water", "shelter", "hazard-permanent", "hazard-patrol")
     # Provenance contract (docs/DESIGN.md §2 item 5): bump when any number or
     # generation semantic of this preset changes. Old worlds record the revision
     # that made them; regenerating one after a bump means checking out that commit.
@@ -56,7 +63,9 @@ PRESETS: dict[str, Preset] = {
         height=24.0,
         food_count=7,
         water_count=2,
-        permanent_hazards=0,
+        # Contraction, structurally: the hazard-permanent system is not part
+        # of this archetype (previously expressed as permanent_hazards=0).
+        systems=("food", "water", "shelter", "hazard-patrol"),
         patrols=4,
         fertility_scale=0.10,
         regrow_per_hour=0.14,

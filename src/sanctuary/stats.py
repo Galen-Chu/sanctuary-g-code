@@ -46,10 +46,17 @@ def poisson_median_nearest(effective_area: float, n: int) -> float:
 
 
 def expected_hazard_coverage(preset: Preset) -> float:
-    """Expected world-area fraction covered by independent random hazard disks."""
+    """Expected world-area fraction covered by independent random hazard disks.
+
+    Composition-aware: only systems actually in the archetype contribute
+    disks (an archetype that drops hazard-permanent has no permanent disks,
+    regardless of the leftover parameter value).
+    """
     area = preset.width * preset.height
-    uncovered = (1.0 - _PERMANENT_DISK_E / area) ** max(preset.permanent_hazards, 0)
-    uncovered *= (1.0 - math.pi * _PATROL_RADIUS**2 / area) ** preset.patrols
+    n_permanent = preset.permanent_hazards if "hazard-permanent" in preset.systems else 0
+    n_patrol = preset.patrols if "hazard-patrol" in preset.systems else 0
+    uncovered = (1.0 - _PERMANENT_DISK_E / area) ** n_permanent
+    uncovered *= (1.0 - math.pi * _PATROL_RADIUS**2 / area) ** n_patrol
     return 1.0 - uncovered
 
 
@@ -136,7 +143,15 @@ def format_fingerprint(fp: Fingerprint, preset: Preset) -> str:
 
 
 def fingerprint(seed: int, preset: Preset, count: int = 100) -> Fingerprint:
-    """Summarize ``preset`` over worlds ``seed..seed+count-1``."""
+    """Summarize ``preset`` over worlds ``seed..seed+count-1``.
+
+    v1 metrics assume the resource systems (food, water, shelter) are in
+    the composition; a contracted archetype without them fails loudly
+    rather than fingerprinting nonsense.
+    """
+    missing = {"food", "water", "shelter"} - set(preset.systems)
+    if missing:
+        raise ValueError(f"stats v1 fingerprints resource-complete archetypes; missing {sorted(missing)}")
     from .generate import generate
 
     water_gaps: list[float] = []

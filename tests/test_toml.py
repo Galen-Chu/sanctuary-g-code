@@ -4,9 +4,28 @@ from __future__ import annotations
 
 import tomllib
 
+import pytest
+
 from sanctuary.generate import generate
 from sanctuary.presets import PRESETS
 from sanctuary.toml_out import scenario_toml
+from sanctuary.world import World
+
+
+def test_toml_capability_raises_for_unsupported_system() -> None:
+    """Adapter capability (DESIGN section 4): unknown vocabulary fails loudly."""
+    world = World(
+        name="t",
+        preset="t",
+        preset_version=1,
+        seed=0,
+        width=10.0,
+        height=10.0,
+        start=(5.0, 5.0),
+        systems=("food", "seasons"),
+    )
+    with pytest.raises(ValueError, match="cannot express"):
+        scenario_toml(world)
 
 
 def test_roundtrip_structure() -> None:

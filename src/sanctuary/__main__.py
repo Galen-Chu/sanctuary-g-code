@@ -8,9 +8,11 @@ import sys
 from pathlib import Path
 
 from .generate import generate
+from .library import archetype_index, specimen_card
 from .population import MANIFEST_NAME, generate_population, population_manifest, world_filename
 from .presets import PRESETS
 from .stats import fingerprint, format_fingerprint
+from .systems import CANONICAL_ORDER
 from .toml_out import scenario_toml
 from .world import World
 
@@ -56,20 +58,39 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--list-presets", action="store_true", help="list presets and exit")
     parser.add_argument(
+        "--index", action="store_true", help="emit the archetype library index as JSON (stdout or --out) and exit"
+    )
+    parser.add_argument(
         "--fingerprint",
         action="store_true",
         help="summarize the preset's statistics over --samples seeds and exit (ignores --out/--count)",
     )
     parser.add_argument("--samples", type=int, default=100, help="seed count for --fingerprint (default: 100)")
+    parser.add_argument(
+        "--json", action="store_true", help="with --fingerprint: emit the specimen card as JSON instead of text"
+    )
     args = parser.parse_args(argv)
 
     if args.list_presets:
         for name in sorted(PRESETS):
             p = PRESETS[name]
+            dropped = [s for s in CANONICAL_ORDER if s not in p.systems]
+            systems = "systems=all" if not dropped else "systems=-" + ",-".join(dropped)
+            # counts reflect the composition, not leftover parameter values
+            perm = p.permanent_hazards if "hazard-permanent" in p.systems else 0
+            pat = p.patrols if "hazard-patrol" in p.systems else 0
             print(
                 f"{name:12} {p.width:g}x{p.height:g}  food={p.food_count} water={p.water_count} "
-                f"hazards={p.permanent_hazards}+{p.patrols}p  {p.description}"
+                f"hazards={perm}+{pat}p  {systems}  {p.description}"
             )
+        return 0
+
+    if args.index:
+        text = archetype_index() + "\n"
+        if args.out == "-":
+            sys.stdout.write(text)
+        else:
+            _write(Path(args.out), text)
         return 0
 
     if args.count < 1:
@@ -80,7 +101,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.fingerprint:
         if args.samples < 1:
             parser.error("--samples must be >= 1")
-        print(format_fingerprint(fingerprint(args.seed, preset, args.samples), preset))
+        if args.json:
+            print(specimen_card(args.seed, preset, args.samples))
+        else:
+            print(format_fingerprint(fingerprint(args.seed, preset, args.samples), preset))
         return 0
 
     if args.count == 1:

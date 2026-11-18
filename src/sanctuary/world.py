@@ -74,6 +74,7 @@ class World:
     width: float
     height: float
     start: tuple[float, float]
+    systems: tuple[str, ...] = ()  # composition provenance; () = legacy, assume all
     food: tuple[FoodPatch, ...] = ()
     water: tuple[WaterSource, ...] = ()
     shelters: tuple[Shelter, ...] = ()

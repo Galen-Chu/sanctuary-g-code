@@ -62,7 +62,8 @@ sanctuary --list-presets
 sanctuary --seed 1 --preset meadow --out world.toml
 sanctuary --seed 1 --preset meadow --count 3 --out runs/worlds   # population mode：3 世界＋manifest
 sanctuary --preset meadow --fingerprint               # 原型指紋：跨 100 種子的分布統計
-python -m pytest                                     # 50 tests, 含 golden 決定論與 JS 血統比對
+sanctuary --index                                    # 原型庫 JSON 索引（系統組合＋參數＋理論中心）
+python -m pytest                                     # 62 tests, 含 golden 決定論與 JS 血統比對
 ```
 
 不裝也行：`PYTHONPATH=src python -m sanctuary …`（PowerShell：`$env:PYTHONPATH="src"`）。
@@ -82,9 +83,11 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 | `sanctuary/noise.py` | 值雜訊、fbm、smoothstep（同源移植） |
 | `sanctuary/world.py` | `World` 與實體 dataclass——Unbodysoma `world/grid.py` 的鏡像 |
 | `sanctuary/presets.py` | 預設集：meadow / kelp-basin / dryland |
-| `sanctuary/generate.py` | 生成本體：密度場＋拒絕採樣＋植放規則 |
+| `sanctuary/generate.py` | 編排器：驗證原型組合→按正準序跑系統→組裝 `World` |
+| `sanctuary/systems.py` | 可組合生成系統註冊表（五系統；原型＝系統組合＋參數，DESIGN §3） |
 | `sanctuary/population.py` | 世界群模式：主種子派生 N 個世界＋`population.toml` 群級 provenance（`--count N`） |
 | `sanctuary/stats.py` | 統計指紋：跨種子分布指標＋理論校準帶（`--fingerprint`，DESIGN §5） |
+| `sanctuary/library.py` | 世界圖書館：原型庫 JSON 索引（`--index`）＋標本卡（`--fingerprint --json`） |
 | `sanctuary/toml_out.py` | Unbodysoma 情境檔轉接器（相容契約） |
 | `sanctuary/__main__.py` | CLI |
 
@@ -105,6 +108,7 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 - [ ] **Phase 2**：統計驗收（跨種子分布層級驗收＝**原型指紋**）；**架構核心：系統模組化＋世界原型（archetype）註冊＋JSON 轉接器（世界圖書館層）**；掠食者行程策略庫（第一個以註冊系統形式落地的新內容）
   - [x] 族群模式（2026-11-18）：`--count N`＋`population.toml` manifest（派生規則與格式見 DESIGN §2 第 6 點／§4）
   - [x] 統計驗收 v1（2026-11-18）：四項指標＋理論中心×文件化因子帶＋`--fingerprint`（DESIGN §5）
+  - [x] 架構核心 v1（2026-11-18）：系統註冊表＋原型組合＋JSON 索引／標本卡＋轉接器能力宣告（DESIGN §3／§4，重組不改位元組）
 - [ ] **Phase 3**：地形場（可通行性影響植放）；資源季節動態——新系統先落核心＋JSON 轉接器，TOML 鍵集等 Unbodysoma 跟上（轉接器能力宣告，DESIGN §4）
 - [ ] **Phase 4**：3D 密度場（高度場輸出）＋ WebGPU 預覽頁（abyssal-garden 血統的歸宿）
 - [ ] **Phase 5**：品質分層與基準（比照來源專案的自適應策略）

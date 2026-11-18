@@ -17,6 +17,20 @@ from math import isfinite
 from . import __version__
 from .world import World
 
+# Adapter capability (DESIGN §4): the systems this adapter can express.
+# Anything outside raises loudly — silent omission is forbidden. The first
+# real use arrives with seasonal dynamics (Phase 3): it lands in core+JSON
+# first, and TOML raises until Unbodysoma's key set catches up (ADR-0010).
+TOML_SYSTEMS = frozenset({"food", "water", "shelter", "hazard-permanent", "hazard-patrol"})
+
+
+def _check_capability(world: World) -> None:
+    unsupported = set(world.systems) - TOML_SYSTEMS
+    if unsupported:
+        raise ValueError(
+            f"TOML adapter cannot express systems {sorted(unsupported)}; emit a JSON artifact for this archetype"
+        )
+
 
 def _f(v: float) -> str:
     """Format a float deterministically: 6 decimals, trailing zeros trimmed."""
@@ -32,6 +46,7 @@ def scenario_toml(
     organism_seed: int | None = None,
 ) -> str:
     """Render ``world`` as a complete, runnable Unbodysoma scenario file."""
+    _check_capability(world)
     seed = world.seed if organism_seed is None else organism_seed
     stamp = f"sanctuary-g-code v{__version__} — preset={world.preset}@{world.preset_version}, seed={world.seed}"
     lines: list[str] = [
