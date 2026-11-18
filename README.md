@@ -8,12 +8,13 @@
 
 Sanctuary 是一個**決定論的程序化世界產生器**：輸入一顆種子與一個預設，輸出一個完整、可重現的模擬環境——今天就輸出 [Unbodysoma](https://github.com/Galen-Chu/Unbodysoma) 可直接執行的情境檔。
 
-G-Code 生態系的角色分工：**Unbodysoma 給身體與心智，Sanctuary 給世界**。生物體不該永遠住在一張手工擺好的地圖上；同一套規則、不同種子，就該長出佈局不同但統計性質相似的世界。
+G-Code 生態系的角色分工：**Unbodysoma 給身體與心智，Sanctuary 給世界**。生物體不該永遠住在一張手工擺好的地圖上；同一套規則、不同種子，就該長出佈局不同但統計性質相似的世界。Sanctuary 以世界為本位：**世界詞彙的擴張不等任何消費者**——Unbodysoma 是第一個住進來的居民，不是開發節奏的約束。
 
 Sanctuary is a **deterministic procedural world generator**: seed + preset in, a
 complete reproducible environment out — today as a runnable Unbodysoma scenario
 file. In this ecosystem, Unbodysoma builds the body and mind; Sanctuary builds
-the world it lives in.
+the world it lives in. Sanctuary is world-centric: its vocabulary grows without
+waiting for any consumer — Unbodysoma is the first inhabitant, not the schedule.
 
 ```
 seed ──► per-system RNG streams (mulberry32)
@@ -40,7 +41,7 @@ seed ──► per-system RNG streams (mulberry32)
 |------|------|
 | **Deterministic by default** | 同一顆種子 → 逐位元相同的輸出，跨平台、跨 Python 版本（golden test 把關） |
 | **Streams, not globals** | 每個生成系統一條獨立亂數流：改食物的邏輯，水與危險區的數字一個都不動 |
-| **Adapters, not frameworks** | 核心輸出純資料的 `World`；TOML／JSON／預覽都是轉接器，契約見 `docs/DESIGN.md` |
+| **Adapters, not frameworks** | 核心輸出純資料的 `World`；TOML／JSON／預覽都是轉接器，各自宣告能力（capability）——消費者節奏不約束核心，契約見 `docs/DESIGN.md` §4 |
 | **Zero-dependency core** | 核心只用 Python 標準函式庫 |
 | **Rational grounding** | 每個常數與規則在 `docs/DESIGN.md` 有出處或理由 |
 
@@ -92,20 +93,22 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 
 | Repository | Relationship · 關係 |
 |-----------|-------------------|
-| [Unbodysoma](https://github.com/Galen-Chu/Unbodysoma) | **消費者**：`world.toml` 的執行引擎；其 `docs/WORLDGEN.md` 是本專案的設計緣起 |
+| [Unbodysoma](https://github.com/Galen-Chu/Unbodysoma) | **第一個消費者**（契約級耦合：凍結鍵集，非程式相依）：`world.toml` 的執行引擎；其 `docs/WORLDGEN.md` 是本專案的設計緣起 |
 | [panopticon-g-code](https://github.com/Galen-Chu/panopticon-g-code) | 兄弟專案：它觀察生態，本專案建造棲地 |
 | [Noniv/abyssal-garden](https://github.com/Noniv/abyssal-garden) | 管線血統來源（MIT），演算法移植出處 |
 
 ## 🗺️ Roadmap
 
 - [x] **Phase 1（本骨架，2026-11-16）**：決定論 2D 世界生成、Unbodysoma TOML 轉接器（端到端驗證）、preset 版本化、golden 測試＋JS 血統常數、mypy strict CI（2026-11-18 補強：py.typed、CI 跨平台矩陣＋工具釘版）
-- [ ] **Phase 2**：統計不變量（跨種子的分布層級驗收）；族群模式（一次生成 N 個世界）；掠食者行程的策略庫——**與 Unbodysoma 族群執行器組裝成 M1「N 個體 × M 世界」**
+- [ ] **Phase 2**：統計驗收（跨種子分布層級驗收＝**原型指紋**）；**架構核心：系統模組化＋世界原型（archetype）註冊＋JSON 轉接器（世界圖書館層）**；掠食者行程策略庫（第一個以註冊系統形式落地的新內容）
   - [x] 族群模式（2026-11-18）：`--count N`＋`population.toml` manifest（派生規則與格式見 DESIGN §2 第 6 點／§4）
-- [ ] **Phase 3**：地形場（可通行性影響植放）；資源季節動態；更豐富的 preset
+- [ ] **Phase 3**：地形場（可通行性影響植放）；資源季節動態——新系統先落核心＋JSON 轉接器，TOML 鍵集等 Unbodysoma 跟上（轉接器能力宣告，DESIGN §4）
 - [ ] **Phase 4**：3D 密度場（高度場輸出）＋ WebGPU 預覽頁（abyssal-garden 血統的歸宿）
 - [ ] **Phase 5**：品質分層與基準（比照來源專案的自適應策略）
 
-跨階段的具體工作項、生態整合與工程債見 **[docs/BACKLOG.md](docs/BACKLOG.md)**（2026-11-16 盤點歸檔）；設計層的未決問題見 [DESIGN.md](docs/DESIGN.md) §6。
+**M1「N 個體 × M 世界」（已降位，2026-11-18）**：從 Phase 2 的組裝終點改為**拉動即用的消費者整合**——Unbodysoma `run_population` × 本專案 population mode 兩側基礎設施已就緒，需要行為層回饋時隨時組裝。世界詞彙的擴張不等待它。
+
+跨階段的具體工作項、生態整合與工程債見 **[docs/BACKLOG.md](docs/BACKLOG.md)**（2026-11-16 盤點歸檔；2026-11-18 方向修訂：M1 降位、四層架構定案）；設計層的未決問題見 [DESIGN.md](docs/DESIGN.md) §6。
 
 細節與開放問題見 [docs/DESIGN.md](docs/DESIGN.md)。
 
