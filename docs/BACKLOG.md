@@ -29,10 +29,12 @@
 
 ## 5. 工程與基礎設施
 
-- **`py.typed` 標記**：讓下游（Unbodysoma 若引用）的型別檢查吃得到標注；mypy strict 已綠，差的只是封裝標記。
+- **`py.typed` 標記**：✅ 完成（2026-11-18）——標記已入 `src/sanctuary/`，wheel 打包內容驗證通過；CI 同日補強跨平台矩陣（ubuntu/windows/macos × Python 3.11–3.14）與 ruff/mypy 釘版。
 - **v0.1.0 release tag**：版本化契約已定案、preset 全部 `@1`——Phase 2（population mode＋統計驗收）落地後打 tag 最乾淨；若 Phase 2 前有外部消費者需求可提前。
 - **CI 的 Node 作業（選配）**：把 `verify_lineage.mjs` 的跨語言比對納入 CI（需要 node runner；目前是文件化的手動步驟）。風險低但非必要——血統已由 Python 側的 golden 常數（`test_js_lineage`）單向釘死。
-- **GitHub repo 的 description／topics**：`procedural-generation, worldgen, deterministic, simulation`——手動一次的事。
+- **GitHub repo 的 description／topics**：定案（2026-11-18，本機無 gh 指令待套用）——
+  description："Deterministic procedural world generator: seed + preset in, a complete reproducible world out — the habitat half of the Unbodysoma ecosystem."
+  topics：`procedural-generation, worldgen, deterministic, simulation, python`。
 
 ## 6. 已回答的設計問題（歸檔）
 

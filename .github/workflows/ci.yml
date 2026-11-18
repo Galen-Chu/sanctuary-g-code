@@ -5,18 +5,38 @@ on:
   pull_request:
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # Pinned: ruff's formatter and mypy's strict error set change across
+      # versions, and an unpinned install breaks CI without a repo change.
+      - run: pip install -e ".[dev]" "ruff==0.16.2" "mypy==2.3.0"
+      - run: python -m ruff format --check .
+      - run: python -m ruff check .
+      - run: python -m mypy
+
+  test:
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.11", "3.13"]
+        # Determinism is promised cross-platform and cross-version
+        # (DESIGN.md §2); the golden byte-compare must run everywhere
+        # the claim is made. Windows/macOS each cover one version.
+        include:
+          - { os: ubuntu-latest, python-version: "3.11" }
+          - { os: ubuntu-latest, python-version: "3.13" }
+          - { os: ubuntu-latest, python-version: "3.14" }
+          - { os: windows-latest, python-version: "3.14" }
+          - { os: macos-latest, python-version: "3.14" }
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install pytest mypy ruff
-      - run: python -m ruff format --check .
-      - run: python -m ruff check .
+      - run: pip install -e ".[dev]"
       - run: python -m pytest -q
-      - run: python -m mypy

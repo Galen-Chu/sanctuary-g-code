@@ -96,7 +96,7 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 
 ## 🗺️ Roadmap
 
-- [x] **Phase 1（本骨架，2026-11-16）**：決定論 2D 世界生成、Unbodysoma TOML 轉接器（端到端驗證）、preset 版本化、golden 測試＋JS 血統常數、mypy strict CI
+- [x] **Phase 1（本骨架，2026-11-16）**：決定論 2D 世界生成、Unbodysoma TOML 轉接器（端到端驗證）、preset 版本化、golden 測試＋JS 血統常數、mypy strict CI（2026-11-18 補強：py.typed、CI 跨平台矩陣＋工具釘版）
 - [ ] **Phase 2**：統計不變量（跨種子的分布層級驗收）；族群模式（一次生成 N 個世界）；掠食者行程的策略庫——**與 Unbodysoma 族群執行器組裝成 M1「N 個體 × M 世界」**
 - [ ] **Phase 3**：地形場（可通行性影響植放）；資源季節動態；更豐富的 preset
 - [ ] **Phase 4**：3D 密度場（高度場輸出）＋ WebGPU 預覽頁（abyssal-garden 血統的歸宿）
