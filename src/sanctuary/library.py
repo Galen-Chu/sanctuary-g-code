@@ -40,6 +40,7 @@ def _archetype_entry(preset: Preset) -> dict[str, object]:
             "shelter_count": preset.shelter_count,
             "permanent_hazards": preset.permanent_hazards,
             "patrols": preset.patrols,
+            "patrol_strategy": preset.patrol_strategy,
             "fertility_scale": preset.fertility_scale,
             "regrow_per_hour": preset.regrow_per_hour,
             "min_food_gap": preset.min_food_gap,

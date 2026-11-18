@@ -76,12 +76,13 @@ def main(argv: list[str] | None = None) -> int:
             p = PRESETS[name]
             dropped = [s for s in CANONICAL_ORDER if s not in p.systems]
             systems = "systems=all" if not dropped else "systems=-" + ",-".join(dropped)
+            strategy = "" if p.patrol_strategy == "fixed" else f"  patrol={p.patrol_strategy}"
             # counts reflect the composition, not leftover parameter values
             perm = p.permanent_hazards if "hazard-permanent" in p.systems else 0
             pat = p.patrols if "hazard-patrol" in p.systems else 0
             print(
                 f"{name:12} {p.width:g}x{p.height:g}  food={p.food_count} water={p.water_count} "
-                f"hazards={perm}+{pat}p  {systems}  {p.description}"
+                f"hazards={perm}+{pat}p  {systems}{strategy}  {p.description}"
             )
         return 0
 

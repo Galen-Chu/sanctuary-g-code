@@ -15,6 +15,7 @@ from collections.abc import Callable
 from .noise import fbm2
 from .presets import Preset
 from .rng import Streams
+from .strategies import validate_strategy
 from .systems import SYSTEMS, Generation, validate_composition
 from .world import World
 
@@ -38,6 +39,7 @@ def _wetness() -> Field:
 def generate(seed: int, preset: Preset) -> World:
     """Generate one world from (seed, preset). Pure: same input, same world."""
     selection = validate_composition(preset.systems)
+    validate_strategy(preset.patrol_strategy)
     gen = Generation(
         seed=seed,
         preset=preset,

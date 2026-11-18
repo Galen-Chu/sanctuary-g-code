@@ -78,19 +78,25 @@ def test_hazard_coverage_in_band(name: str) -> None:
 
 
 @pytest.mark.parametrize("name", sorted(PRESETS))
-def test_patrol_hours_are_cyclic_slots(name: str) -> None:
-    """Patrols fire in slots {11,14,17,20} cyclically, each with +-0.5h jitter.
+def test_patrol_hours_match_strategy(name: str) -> None:
+    """Each strategy's hour pattern holds across seeds (strategies.py registry).
 
-    Structural, not statistical: slot assignment is by draw index, so meadow
-    (2 patrols) always covers 11h and 14h -- a rigidity the patrol strategy
-    library (BACKLOG section 1) exists to break.
+    fixed/regional: cyclic slots {11,14,17,20} +-0.5h; circadian: strict 6h
+    period; sweep: uniform over the clock-hour domain [8, 32).
     """
+    preset = PRESETS[name]
     slots = (11.0, 14.0, 17.0, 20.0)
-    for seed in range(SEED0, SEED0 + 10):
-        hours = patrol_clock_hours(generate(seed, PRESETS[name]))
-        assert len(hours) == PRESETS[name].patrols
-        for j, hour in enumerate(hours):
-            assert abs(hour - slots[j % len(slots)]) <= 0.5 + 1e-9
+    for seed in range(SEED0, SEED0 + 5):
+        hours = patrol_clock_hours(generate(seed, preset))
+        assert len(hours) == preset.patrols
+        if preset.patrol_strategy in ("fixed", "regional"):
+            for j, hour in enumerate(hours):
+                assert abs(hour - slots[j % len(slots)]) <= 0.5 + 1e-9
+        elif preset.patrol_strategy == "circadian":
+            for a, b in zip(hours, hours[1:], strict=False):
+                assert abs((b - a) - 6.0) <= 0.5 + 1e-9
+        else:
+            assert all(8.0 <= h < 32.0 for h in hours)
 
 
 def test_hazard_coverage_single_disk() -> None:

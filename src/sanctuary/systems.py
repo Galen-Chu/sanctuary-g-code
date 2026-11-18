@@ -23,6 +23,7 @@ from math import hypot
 from .noise import clamp
 from .presets import Preset
 from .rng import Stream, Streams
+from .strategies import STRATEGIES
 from .world import FoodPatch, Hazard, Shelter, WaterSource
 
 # System ids are a stability contract (docs/DESIGN.md §2): never renumber.
@@ -34,10 +35,6 @@ S_HAZARD = 5
 S_PATROL = 6
 
 _MARGIN = 2.0
-_PATROL_HOURS = (11.0, 14.0, 17.0, 20.0)  # clock hours, day starts at 08:00
-_PATROL_WINDOW_S = 3600.0
-_DAY_S = 86400.0
-_START_HOUR = 8.0
 
 
 @dataclass
@@ -109,13 +106,10 @@ def _sample(
     return pts
 
 
-def _shuffled(n: int, r: Stream) -> list[int]:
-    """Fisher-Yates over range(n) using only the stream."""
-    order = list(range(n))
-    for i in range(n - 1, 0, -1):
-        j = int(r.f01() * (i + 1))
-        order[i], order[j] = order[j], order[i]
-    return order
+def _schedule_patrols(gen: Generation) -> None:
+    """Dispatch to the archetype's patrol strategy (strategies.py registry)."""
+    r = gen.streams.stream(S_PATROL)
+    STRATEGIES[gen.preset.patrol_strategy](r, gen)
 
 
 def _place_food(gen: Generation) -> None:
@@ -180,18 +174,6 @@ def _try_place_permanent(
             continue
         return Hazard(x, y, radius=r.range(2.0, 3.5), strength=0.9)
     return None
-
-
-def _schedule_patrols(gen: Generation) -> None:
-    """Daily visitors on distinct food patches, spread across the day."""
-    r = gen.streams.stream(S_PATROL)
-    for j, fi in enumerate(_shuffled(len(gen.food), r)[: gen.preset.patrols]):
-        hour = _PATROL_HOURS[j % len(_PATROL_HOURS)] + r.range(-0.5, 0.5)
-        start = (hour - _START_HOUR) * 3600.0
-        patch = gen.food[fi]
-        gen.hazards.append(
-            Hazard(patch.x, patch.y, radius=3.5, strength=0.9, start=start, end=start + _PATROL_WINDOW_S, every=_DAY_S)
-        )
 
 
 # Canonical order: a topological order of the dependency graph. Execution is

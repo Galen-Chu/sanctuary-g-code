@@ -22,6 +22,10 @@ class Preset:
     shelter_count: int = 1
     permanent_hazards: int = 1
     patrols: int = 2  # scheduled predators, each visiting one food patch daily
+    # Which patrol strategy (strategies.py registry) drives hazard-patrol.
+    # Strategies are behaviourally distinguishable statistics — the problem
+    # statements for Unbodysoma's learning experiments.
+    patrol_strategy: str = "fixed"
     fertility_scale: float = 0.06  # noise scale of the fertility field (1/cells)
     regrow_per_hour: float = 0.1
     min_food_gap: float = 5.0  # minimum distance between food patches (cells)
@@ -83,5 +87,35 @@ PRESETS: dict[str, Preset] = {
         fertility_scale=0.05,
         regrow_per_hour=0.08,
         min_food_gap=6.0,
+    ),
+    # Learning-experiment variants of meadow (BACKLOG section 1): the same
+    # world class, differing only in predator behaviour — each strategy is a
+    # distinguishable-in-statistics problem statement for Unbodysoma Phase 3.
+    "meadow-roam": Preset(
+        name="meadow-roam",
+        description="Meadow under an unpredictable predator: patrol hours uniform over the whole day (sweep)",
+        width=20.0,
+        height=20.0,
+        food_count=5,
+        water_count=2,
+        patrol_strategy="sweep",
+    ),
+    "meadow-tide": Preset(
+        name="meadow-tide",
+        description="Meadow under a rhythmic predator: visits every 6 h at a stable phase (circadian)",
+        width=20.0,
+        height=20.0,
+        food_count=5,
+        water_count=2,
+        patrol_strategy="circadian",
+    ),
+    "meadow-focal": Preset(
+        name="meadow-focal",
+        description="Meadow under a regional predator: all visits concentrate on one anchor patch (regional)",
+        width=20.0,
+        height=20.0,
+        food_count=5,
+        water_count=2,
+        patrol_strategy="regional",
     ),
 }
