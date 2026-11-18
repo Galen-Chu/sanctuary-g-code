@@ -10,6 +10,7 @@ from pathlib import Path
 from .generate import generate
 from .population import MANIFEST_NAME, generate_population, population_manifest, world_filename
 from .presets import PRESETS
+from .stats import fingerprint, format_fingerprint
 from .toml_out import scenario_toml
 from .world import World
 
@@ -54,6 +55,12 @@ def main(argv: list[str] | None = None) -> int:
         "plus a population.toml manifest (default: 1, single world)",
     )
     parser.add_argument("--list-presets", action="store_true", help="list presets and exit")
+    parser.add_argument(
+        "--fingerprint",
+        action="store_true",
+        help="summarize the preset's statistics over --samples seeds and exit (ignores --out/--count)",
+    )
+    parser.add_argument("--samples", type=int, default=100, help="seed count for --fingerprint (default: 100)")
     args = parser.parse_args(argv)
 
     if args.list_presets:
@@ -69,6 +76,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--count must be >= 1")
 
     preset = PRESETS[args.preset]
+
+    if args.fingerprint:
+        if args.samples < 1:
+            parser.error("--samples must be >= 1")
+        print(format_fingerprint(fingerprint(args.seed, preset, args.samples), preset))
+        return 0
 
     if args.count == 1:
         world = generate(args.seed, preset)

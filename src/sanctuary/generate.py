@@ -86,9 +86,12 @@ def _sample(
             gap *= 0.5
         x = r.range(_MARGIN, w - _MARGIN)
         y = r.range(_MARGIN, h - _MARGIN)
-        if tries <= 20_000 and field(x, y) < threshold:
-            continue
+        # Cheap rejection first: both predicates must pass, so their order
+        # changes nothing about which proposals are accepted -- only how
+        # many fbm evaluations the rejected ones cost.
         if _too_close(x, y, pts, gap):
+            continue
+        if tries <= 20_000 and field(x, y) < threshold:
             continue
         pts.append((x, y))
     return pts
@@ -172,13 +175,14 @@ def _place_permanent(
     for _ in range(4_000):
         x = r.range(_MARGIN, w - _MARGIN)
         y = r.range(_MARGIN, h - _MARGIN)
-        if fertility(x, y) > 0.45:  # want barren ground
-            continue
+        # Cheap rejections first (see _sample): same accepts, fewer fbm calls.
         if hypot(x - shelter.x, y - shelter.y) < clearance + shelter.radius + 2.0:
             continue
         if any(hypot(x - wx, y - wy) < clearance for wx, wy in water_pts):
             continue
         if any(hypot(x - e.x, y - e.y) < clearance for e in existing):
+            continue
+        if fertility(x, y) > 0.45:  # want barren ground
             continue
         return Hazard(x, y, radius=r.range(2.0, 3.5), strength=0.9)
     return None
