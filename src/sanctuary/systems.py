@@ -18,23 +18,29 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from math import hypot
+from math import hypot, sin, tau
 
-from .noise import clamp
+from .noise import clamp, fbm2
 from .presets import Preset
 from .rng import Stream, Streams
 from .strategies import STRATEGIES
-from .world import FoodPatch, Hazard, Shelter, WaterSource
+from .world import FoodPatch, Hazard, Season, Shelter, WaterSource
 
 # System ids are a stability contract (docs/DESIGN.md §2): never renumber.
-S_TERRAIN = 1  # reserved: terrain fields are pure functions of position
+S_TERRAIN = 1  # pure functions of position: the stream stays unused
 S_FOOD = 2
 S_WATER = 3
 S_SHELTER = 4
 S_HAZARD = 5
 S_PATROL = 6
+S_SEASONS = 7  # the season plan is preset math today; the stream waits for
+#               per-patch asynchrony (if ever) to need draws
 
 _MARGIN = 2.0
+
+# Season names for the default four-phase cycle: the sinusoid starts at its
+# minimum (winter = leanest), peaks in summer, and means exactly 1.0.
+_SEASON_NAMES = ("winter", "spring", "summer", "autumn")
 
 
 @dataclass
@@ -42,7 +48,8 @@ class Generation:
     """The mutable accumulation one world is built in.
 
     ``fertility`` / ``wetness`` are pure functions of position (plus preset
-    constants); systems read them freely — they never draw.
+    constants); systems read them freely — they never draw. ``passable`` is
+    ``None`` unless the terrain system is in the composition.
     """
 
     seed: int
@@ -50,10 +57,12 @@ class Generation:
     streams: Streams
     fertility: Callable[[float, float], float]
     wetness: Callable[[float, float], float]
+    passable: Callable[[float, float], bool] | None = None
     food: list[FoodPatch] = field(default_factory=list)
     water: list[WaterSource] = field(default_factory=list)
     shelters: list[Shelter] = field(default_factory=list)
     hazards: list[Hazard] = field(default_factory=list)
+    seasons: list[Season] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -79,12 +88,18 @@ def _sample(
     h: float,
     min_gap: float,
     threshold: float = 0.5,
+    passable: Callable[[float, float], bool] | None = None,
 ) -> list[tuple[float, float]]:
     """Rejection-sample ``count`` points from a density field.
 
     Phase 1 respects ``threshold``; if the field is too barren to satisfy it,
     phase 2 accepts any position. If even the minimum gap cannot be met, the
     gap halves every 20,000 proposals — placement always terminates.
+
+    ``passable`` (terrain system) is a **hard** constraint: it is never
+    relaxed by the phase-2 fallback, because plants cannot root on impassable
+    ground no matter how contested the map is. The density threshold stays the
+    soft, relaxable one. ``passable=None`` (no terrain system) changes nothing.
     """
     pts: list[tuple[float, float]] = []
     tries = 0
@@ -95,10 +110,12 @@ def _sample(
             gap *= 0.5
         x = r.range(_MARGIN, w - _MARGIN)
         y = r.range(_MARGIN, h - _MARGIN)
-        # Cheap rejection first: both predicates must pass, so their order
+        # Cheap rejections first: all predicates must pass, so their order
         # changes nothing about which proposals are accepted -- only how
         # many fbm evaluations the rejected ones cost.
         if _too_close(x, y, pts, gap):
+            continue
+        if passable is not None and not passable(x, y):
             continue
         if tries <= 20_000 and field_fn(x, y) < threshold:
             continue
@@ -112,9 +129,48 @@ def _schedule_patrols(gen: Generation) -> None:
     STRATEGIES[gen.preset.patrol_strategy](r, gen)
 
 
+def _elevation_field(preset: Preset) -> Callable[[float, float], float]:
+    """Elevation is a pure function of position (abyssal domain-offset
+    convention: fresh offsets keep it independent of fertility and wetness)."""
+
+    def elevation(x: float, y: float) -> float:
+        return fbm2(x * preset.terrain_scale + 113.7, y * preset.terrain_scale + 61.3, 4)
+
+    return elevation
+
+
+def passable_fn(preset: Preset) -> Callable[[float, float], bool]:
+    """The terrain passability predicate — public because the statistics
+    layer grid-estimates the impassable fraction with the very same
+    function the generator rejects proposals with."""
+
+    elevation = _elevation_field(preset)
+
+    def passable(x: float, y: float) -> bool:
+        return elevation(x, y) < preset.impassable_threshold
+
+    return passable
+
+
+def _build_terrain(gen: Generation) -> None:
+    """Elevation field: ground above ``impassable_threshold`` cannot host
+    plants. The field is pure preset math — the reserved stream id 1 stays
+    unused (DESIGN §2). Food placement treats passability as a hard
+    constraint (see ``_sample``)."""
+    gen.passable = passable_fn(gen.preset)
+
+
 def _place_food(gen: Generation) -> None:
     r = gen.streams.stream(S_FOOD)
-    pts = _sample(r, gen.fertility, gen.preset.food_count, gen.preset.width, gen.preset.height, gen.preset.min_food_gap)
+    pts = _sample(
+        r,
+        gen.fertility,
+        gen.preset.food_count,
+        gen.preset.width,
+        gen.preset.height,
+        gen.preset.min_food_gap,
+        passable=gen.passable,
+    )
     gen.food.extend(FoodPatch(x, y, regrow_per_hour=gen.preset.regrow_per_hour) for x, y in pts)
 
 
@@ -176,14 +232,36 @@ def _try_place_permanent(
     return None
 
 
+def _plan_seasons(gen: Generation) -> None:
+    """A global seasonal regrowth cycle (Phase 3).
+
+    Season ``k``'s multiplier is ``1 + amplitude · sin(2πk/n − π/2)``: the
+    cycle starts at its leanest phase, peaks at ``1 + amplitude``, and means
+    exactly 1.0 over one cycle — no net resource drift. The standard four
+    phases carry the calendar names (winter = leanest → autumn = falling);
+    other counts use neutral names. Pure preset math: stream id 7 stays
+    unused until per-patch phase asynchrony (if ever) needs draws.
+    """
+    n = gen.preset.season_count
+    a = gen.preset.season_amplitude
+    duration = gen.preset.season_cycle_h / n
+    phase0 = -tau / 4.0  # −π/2: season 0 sits at the sinusoid's minimum
+    for k in range(n):
+        multiplier = 1.0 + a * sin(tau * k / n + phase0)
+        name = _SEASON_NAMES[k] if n == 4 else f"season{k + 1}"
+        gen.seasons.append(Season(name=name, duration_h=duration, regrow_multiplier=round(multiplier, 6)))
+
+
 # Canonical order: a topological order of the dependency graph. Execution is
 # always this order restricted to the archetype's selection.
 SYSTEMS: dict[str, System] = {
+    "terrain": System("terrain", S_TERRAIN, _build_terrain),
     "food": System("food", S_FOOD, _place_food),
     "water": System("water", S_WATER, _place_water),
     "shelter": System("shelter", S_SHELTER, _place_shelter, frozenset({"food"})),
     "hazard-permanent": System("hazard-permanent", S_HAZARD, _place_permanent),
     "hazard-patrol": System("hazard-patrol", S_PATROL, _schedule_patrols, frozenset({"food"})),
+    "seasons": System("seasons", S_SEASONS, _plan_seasons, frozenset({"food"})),
 }
 
 CANONICAL_ORDER: tuple[str, ...] = tuple(SYSTEMS)

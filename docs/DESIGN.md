@@ -40,12 +40,13 @@
 
    | id | 系統 | 用途 |
    |---|---|---|
-   | 1 | terrain（保留） | 地形場是位置的純函數，目前不用串流 |
+   | 1 | terrain | 地形場是位置的純函數——系統已落地（Phase 3），串流仍保留不用 |
    | 2 | food | 食物斑塊採樣 |
    | 3 | water | 水源採樣 |
    | 4 | shelter | 庇護所偏移量 |
    | 5 | hazard | 常駐危險區位置與半徑 |
    | 6 | patrol | 巡邏順序與時刻抖動 |
+   | 7 | seasons | 季節計畫目前是 preset 純數學；串流留給（若來的）逐斑塊相位非同步 |
 
 3. **純函數生成**：`generate(seed, preset) -> World` 無副作用、無全域狀態；
    密度場（fertility／wetness）是位置的純函數，只依賴 preset 常數。
@@ -105,6 +106,29 @@ v1 答案）：
 （§5），策略置換不動任何其他系統的實體（per-system 串流的直接兌現，有測試釘死）。
 新增策略＝往註冊表加一項，核心管線零改動。
 
+**Phase 3 擴張（2026-11-27）：地形與季節**——開放問題 2 的答案，兩個新註冊系統：
+
+- **`terrain`（id 1，正準序首位）**：高度場 `fbm2(x·terrain_scale + 113.7,
+  y·terrain_scale + 61.3, 4)`——位置的純函數，串流仍不用。elevation 高於
+  `impassable_threshold`（預設 0.62，實測約 23% 面積不可通行）的地不可通行。
+  可通行性是**硬約束**：`_sample` 的鬆弛機制（先棄密度閾、再減間距）永不放寬它——
+  懸崖上長不出食物，無論地圖多擠；密度閾維持可鬆弛。影響範圍 **v1 只及食物植放**
+  （roadmap 明文「可通行性影響植放」）；水、庇護所、危險區的規則不動，deferred。
+  述詞 `systems.passable_fn(preset)` 同時供生成器與統計層使用——同一個函數，
+  統計量測的與生成器拒絕的絕不漂移。
+- **`seasons`（id 7，正準序末位，needs food）**：全域季節再生週期。季 `k` 的
+  再生乘數＝`1 + amplitude·sin(2πk/n − π/2)`——循環從最枯相位（winter）起、
+  於 summer 峰值 `1+amplitude`，**一循環均值恰為 1.0**（零淨資源漂移；設計
+  常數，`library` 索引帶 `season_mean_multiplier: 1.0`）。n=4 用曆名
+  winter/spring/summer/autumn，其他 n 用中性名。純 preset 數學——串流 id 7
+  保留給（若來的）逐斑塊相位非同步。
+- **決定論兌現**：terrain/seasons 不抽任何一個數——meadow 等既有原型的世界
+  逐位元不變（golden 為證）；highlands 加 terrain 後 water/shelter/hazard
+  與 meadow 同種子逐 draw 相同（食物因硬約束改位，per-system 串流的直接兌現）。
+  新原型 **highlands**（meadow＋terrain）與 **meadow-seasons**（meadow＋seasons）
+  資源計數與 meadow 相同——對 meadow 的差異即新系統的淨效應（受控對照，同
+  meadow-* 策略變體的慣例）。
+
 ## 4. 轉接器契約 Adapter Contract
 
 `toml_out.scenario_toml()` 發射的鍵集必須**精確等於** Unbodysoma
@@ -142,10 +166,12 @@ organism_seed）；`[[worlds]]` 逐世界記錄 name、file、seed、該檔 SHA-
 每個轉接器宣告自己能表達的系統／特性集合（能力矩陣）。核心詞彙超出轉接器能力
 時，行為必須是**明確降級（文件化）或大聲報錯**，絕不默默省略。機制已落地：
 `toml_out.TOML_SYSTEMS`（五系統全支援）＋ `scenario_toml` 入口的
-`_check_capability`（超出即 `ValueError`）。第一個實際觸發點是 Phase 3 季節動態
-——先落核心＋JSON，TOML 在 Unbodysoma 鍵集跟上（ADR-0010）前會報錯而非省略。
-JSON 側：原型庫索引與標本卡（`library.py`）已經是 JSON 產物；完整世界 JSON 隨
-Phase 4 WebGPU 預覽到來。這讓 Unbodysoma 的鍵集擴充節奏不再擋住核心的新系統。
+`_check_capability`（超出即 `ValueError`）。**實際觸發點已落地（Phase 3）**：
+terrain 與 seasons 都不在能力集內——含它們的原型（highlands、meadow-seasons）
+走 TOML 會大聲報錯，而不是默默省略可通行性或季節語意；JSON 側：原型庫索引
+（`library.py`）帶齊 terrain/season 參數與系統組合，標本卡指紋帶
+`impassable_fraction_mean`。完整世界 JSON 隨 Phase 4 WebGPU 預覽到來。這讓
+Unbodysoma 的鍵集擴充節奏不再擋住核心的新系統。
 
 ## 5. 測試策略
 
@@ -171,6 +197,13 @@ Phase 4 WebGPU 預覽到來。這讓 Unbodysoma 的鍵集擴充節奏不再擋�
 | 庇護所→最近食物中位數 | 偏移量 3–5；「最近」可能取自側翼斑塊 | [2.0, 5.5] | 2.57–3.61 |
 | 危險覆蓋率（聯集圓盤／名目面積，0.5 格網格估計） | `1−∏(1−E[圓盤]/A)`（獨立圓盤） | ×[0.5, 1.75] | 比值 1.00–1.01 |
 
+Phase 3 原型（100 種子，2026-11-27）：**highlands** 四指標全在帶內（覆蓋率比值
+1.004——獨立圓盤模型在有地形約束下依舊成立），`impassable_fraction` 0.228 為
+reported（無帶）；shelter-food 2.49 低於舊帶下限 2.5——§5 既已文件化「帶下限
+放至 2.0」（側翼斑塊效應），程式碼對齊文件（`SHELTER_FOOD_BAND = (2.0, 5.5)`），
+非調至綠。**meadow-seasons** 四指標與 meadow 逐項幾乎相同——季節計畫不動任何
+draw 的受控對照承諾，指紋層面兌現。
+
 觀察記錄：獨立圓盤模型幾乎精確（比值≈1.00）；水源距離的膨脹方向符合有限點數
 （均勻方格精確值比泊松高約 9%）＋邊界＋場叢聚；庇護所向中心偏移使其→水距離
 低於均勻理論；meadow 的庇護所→最近食物（2.57）低於偏移下限——「最近」常取自
@@ -189,9 +222,10 @@ vs circadian 恆 6 h）、目標選擇（regional 全同錨點）三者可區分
 
 1. ~~**統計驗收**~~ → **v1 已定案**（2026-11-18，見 §5 統計驗收）：四項指標、
    可執行理論中心×文件化因子；遺留為帶寬收緊與新指標（圖論可達性）。
-2. **地形場**（Phase 3）：可通行性目前不存在（torus 網格全域可走）。引入
-   高度場後，植放規則要加「可達性」——這是 abyssal `CLEARS`（淨空保證）的
-   對應物，也是它最值得抄的工程模式之一。
+2. ~~**地形場**（Phase 3）~~ → **v1 已定案**（2026-11-27，見 §3 Phase 3 擴張）：
+   terrain 系統以高度場 + 硬約束可通行性落地，v1 影響範圍限食物植放；
+   水源／庇護所／危險區的可通行性互動 deferred。統計驗收帶來的新量測
+   `impassable_fraction` 為 reported（fbm 超越質量無閉式理論），帶待理論精化。
 3. **WebGPU 預覽**（Phase 4）：輸出格式傾向 JSON（座標＋場參數），前端以
    同源雜訊常數重算場來鋪渲染——種子真正跨語言共享的那一天。
 4. ~~**系統介面與原型 schema**~~ → **v1 已定案**（2026-11-18，見 §3 可組合

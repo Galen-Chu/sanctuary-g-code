@@ -68,4 +68,5 @@ def generate(seed: int, preset: Preset) -> World:
         water=tuple(gen.water),
         shelters=tuple(gen.shelters),
         hazards=tuple(gen.hazards),
+        seasons=tuple(gen.seasons),
     )

@@ -28,6 +28,16 @@ def test_toml_capability_raises_for_unsupported_system() -> None:
         scenario_toml(world)
 
 
+@pytest.mark.parametrize("preset_name", ["highlands", "meadow-seasons"])
+def test_toml_capability_raises_for_phase3_archetypes(preset_name: str) -> None:
+    """Phase 3's real first triggers: terrain and seasonality cannot be
+    expressed in Unbodysoma's frozen key set (ADR-0010 pending) — raise,
+    never silently emit a lossy file."""
+    world = generate(1, PRESETS[preset_name])
+    with pytest.raises(ValueError, match="cannot express"):
+        scenario_toml(world)
+
+
 def test_roundtrip_structure() -> None:
     text = scenario_toml(generate(2, PRESETS["meadow"]))
     data = tomllib.loads(text)

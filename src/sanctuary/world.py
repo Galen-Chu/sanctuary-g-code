@@ -64,6 +64,20 @@ class Hazard:
 
 
 @dataclass(frozen=True)
+class Season:
+    """One phase of the seasonal resource cycle.
+
+    For ``duration_h`` hours, every food patch's regrowth rate scales by
+    ``regrow_multiplier`` (1.0 = nominal). The cycle repeats every
+    ``sum(duration_h)`` hours for as long as the simulation runs.
+    """
+
+    name: str
+    duration_h: float
+    regrow_multiplier: float
+
+
+@dataclass(frozen=True)
 class World:
     """A complete generated world plus the bookkeeping to reproduce it."""
 
@@ -79,3 +93,4 @@ class World:
     water: tuple[WaterSource, ...] = ()
     shelters: tuple[Shelter, ...] = ()
     hazards: tuple[Hazard, ...] = ()
+    seasons: tuple[Season, ...] = ()  # empty = aseasonal (legacy worlds)

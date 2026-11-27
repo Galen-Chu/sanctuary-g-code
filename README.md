@@ -63,7 +63,7 @@ sanctuary --seed 1 --preset meadow --out world.toml
 sanctuary --seed 1 --preset meadow --count 3 --out runs/worlds   # population mode：3 世界＋manifest
 sanctuary --preset meadow --fingerprint               # 原型指紋：跨 100 種子的分布統計
 sanctuary --index                                    # 原型庫 JSON 索引（系統組合＋參數＋理論中心）
-python -m pytest                                     # 85 tests, 含 golden 決定論與 JS 血統比對
+python -m pytest                                     # 105 tests, 含 golden 決定論與 JS 血統比對
 ```
 
 不裝也行：`PYTHONPATH=src python -m sanctuary …`（PowerShell：`$env:PYTHONPATH="src"`）。
@@ -84,7 +84,7 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
 | `sanctuary/world.py` | `World` 與實體 dataclass——Unbodysoma `world/grid.py` 的鏡像 |
 | `sanctuary/presets.py` | 預設集：meadow / kelp-basin / dryland |
 | `sanctuary/generate.py` | 編排器：驗證原型組合→按正準序跑系統→組裝 `World` |
-| `sanctuary/systems.py` | 可組合生成系統註冊表（五系統；原型＝系統組合＋參數，DESIGN §3） |
+| `sanctuary/systems.py` | 可組合生成系統註冊表（七系統；原型＝系統組合＋參數，DESIGN §3） |
 | `sanctuary/strategies.py` | 掠食者策略庫：fixed／sweep／circadian／regional——統計可區分的巡邏行為 |
 | `sanctuary/population.py` | 世界群模式：主種子派生 N 個世界＋`population.toml` 群級 provenance（`--count N`） |
 | `sanctuary/stats.py` | 統計指紋：跨種子分布指標＋理論校準帶（`--fingerprint`，DESIGN §5） |
@@ -112,7 +112,7 @@ python -m unbodysoma run <path-to>/world.toml --out runs/world_s1
   - [x] 統計驗收 v1（2026-11-18）：四項指標＋理論中心×文件化因子帶＋`--fingerprint`（DESIGN §5）
   - [x] 架構核心 v1（2026-11-18）：系統註冊表＋原型組合＋JSON 索引／標本卡＋轉接器能力宣告（DESIGN §3／§4，重組不改位元組）
   - [x] 策略庫（2026-11-18）：fixed／sweep／circadian／regional＋meadow 三變體入庫（DESIGN §3）
-- [ ] **Phase 3**：地形場（可通行性影響植放）；資源季節動態——新系統先落核心＋JSON 轉接器，TOML 鍵集等 Unbodysoma 跟上（轉接器能力宣告，DESIGN §4）
+- [x] **Phase 3（2026-11-27 完成）**：**地形場**（elevation 場＋可通行性硬約束影響植放；`terrain` 系統，id 1 如約保留）＋**資源季節動態**（全域正弦再生週期、一循環均值恰為 1.0；`seasons` 系統，id 7）——新原型 highlands／meadow-seasons 與 meadow 同資源計數（受控對照）；兩系統不在 TOML 能力集內（ADR-0010 待 Unbodysoma），索引與標本卡 JSON 帶齊新詞彙；決定論驗證：既有原型逐位元不變（golden 為證）、terrain/seasons 零 draw（DESIGN §3）
 - [ ] **Phase 4**：3D 密度場（高度場輸出）＋ WebGPU 預覽頁（abyssal-garden 血統的歸宿）
 - [ ] **Phase 5**：品質分層與基準（比照來源專案的自適應策略）
 

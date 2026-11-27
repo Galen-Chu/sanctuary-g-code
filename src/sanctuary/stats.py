@@ -28,13 +28,16 @@ from dataclasses import dataclass
 from statistics import median
 
 from .presets import Preset
+from .systems import passable_fn
 from .world import World
 
 # Band factors around the theory centres. Tighten only with a sharpened
 # theory, never by observing where a test happens to sit (DESIGN section 5).
 WATER_BAND_FACTOR = (0.5, 2.0)
 COVERAGE_BAND_FACTOR = (0.5, 1.75)
-SHELTER_FOOD_BAND = (2.5, 5.5)  # offset range 3..5 + clamp/nearest-tie slack
+# Offset range 3..5 toward the centre from the *best* patch — but "nearest"
+# may be a flank patch, so the documented lower limit is 2.0 (DESIGN §5).
+SHELTER_FOOD_BAND = (2.0, 5.5)
 
 _PERMANENT_DISK_E = math.pi * 7.75  # E[pi r^2] for r ~ U(2.0, 3.5)
 _PATROL_RADIUS = 3.5
@@ -122,6 +125,30 @@ class Fingerprint:
     shelter_food_median: float
     shelter_water_median: float
     hazard_coverage_mean: float
+    impassable_fraction_mean: float | None = None  # None = no terrain system
+
+
+def impassable_fraction(world: World, preset: Preset, step: float = 0.5) -> float:
+    """Grid estimate of the world fraction failing the terrain passability
+    predicate (deterministic cell-centre walk, same idiom as hazard coverage).
+
+    v1 is a *reported* metric without a theory band: fbm's value distribution
+    has no closed-form exceedance mass. It sharpens only with a sharpened
+    theory (DESIGN §5 遺留), never by tuning.
+    """
+    predicate = passable_fn(preset)
+    ny = int(world.height / step)
+    nx = int(world.width / step)
+    impassable = 0
+    total = 0
+    for iy in range(ny):
+        y = (iy + 0.5) * step
+        for ix in range(nx):
+            x = (ix + 0.5) * step
+            total += 1
+            if not predicate(x, y):
+                impassable += 1
+    return impassable / total
 
 
 def format_fingerprint(fp: Fingerprint, preset: Preset) -> str:
@@ -139,6 +166,10 @@ def format_fingerprint(fp: Fingerprint, preset: Preset) -> str:
         f"  hazard coverage mean   {fp.hazard_coverage_mean:7.3f}  center {center_cov:.3f},"
         f" band [{clo * center_cov:.3f}, {chi * center_cov:.3f}]",
     ]
+    if fp.impassable_fraction_mean is not None:
+        lines.append(
+            f"  impassable fraction    {fp.impassable_fraction_mean:7.3f}  reported, no theory band yet"
+        )
     return "\n".join(lines)
 
 
@@ -158,12 +189,15 @@ def fingerprint(seed: int, preset: Preset, count: int = 100) -> Fingerprint:
     shelter_food: list[float] = []
     shelter_water: list[float] = []
     coverages: list[float] = []
+    impassable: list[float] | None = [] if "terrain" in preset.systems else None
     for i in range(count):
         world = generate(seed + i, preset)
         water_gaps.append(median(food_water_distances(world)))
         shelter_food.append(shelter_food_distance(world))
         shelter_water.append(shelter_water_distance(world))
         coverages.append(hazard_coverage(world))
+        if impassable is not None:
+            impassable.append(impassable_fraction(world, preset))
     return Fingerprint(
         preset=preset.name,
         seed=seed,
@@ -172,4 +206,7 @@ def fingerprint(seed: int, preset: Preset, count: int = 100) -> Fingerprint:
         shelter_food_median=median(shelter_food),
         shelter_water_median=median(shelter_water),
         hazard_coverage_mean=sum(coverages) / len(coverages),
+        impassable_fraction_mean=(
+            sum(impassable) / len(impassable) if impassable is not None else None
+        ),
     )

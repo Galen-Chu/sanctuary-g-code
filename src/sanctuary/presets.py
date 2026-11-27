@@ -31,6 +31,19 @@ class Preset:
     min_food_gap: float = 5.0  # minimum distance between food patches (cells)
     min_water_gap: float = 6.0
     hazard_clearance: float = 3.0  # permanent hazards keep this far from water/shelter
+    # Terrain (system "terrain", Phase 3): an elevation field gates where
+    # plants may root. Ground above ``impassable_threshold`` is impassable —
+    # the default 0.62 measures ~23% of the map as rocky outcrops across
+    # seeds (fingerprint-reported; no closed-form theory for fbm exceedance).
+    terrain_scale: float = 0.055
+    impassable_threshold: float = 0.62
+    # Seasons (system "seasons", Phase 3): a global sinusoidal regrowth
+    # cycle. ``season_count`` phases each last ``season_cycle_h / count``
+    # hours; multipliers swing 1 ± ``season_amplitude`` and mean exactly 1.0
+    # over one cycle (no net resource drift).
+    season_cycle_h: float = 96.0
+    season_count: int = 4
+    season_amplitude: float = 0.5
     # Composition (archetype, DESIGN §3): which registered systems build this
     # world. Selection order is irrelevant — execution is always the canonical
     # order of systems.SYSTEMS, restricted to the selection. Contraction =
@@ -117,5 +130,32 @@ PRESETS: dict[str, Preset] = {
         food_count=5,
         water_count=2,
         patrol_strategy="regional",
+    ),
+    # Phase 3 expansions. Both keep meadow's resource counts so differences
+    # against meadow isolate the new system's effect (controlled comparison,
+    # same idiom as the meadow-* strategy variants).
+    "highlands": Preset(
+        name="highlands",
+        description=(
+            "Meadow over rocky ground: an elevation field makes outcrops impassable, "
+            "so plants root only on passable soil"
+        ),
+        width=20.0,
+        height=20.0,
+        food_count=5,
+        water_count=2,
+        systems=("terrain", "food", "water", "shelter", "hazard-permanent", "hazard-patrol"),
+    ),
+    "meadow-seasons": Preset(
+        name="meadow-seasons",
+        description=(
+            "Meadow under a 96 h seasonal cycle: regrowth swings 1 ± 0.5 from "
+            "winter's leanest phase to summer's peak"
+        ),
+        width=20.0,
+        height=20.0,
+        food_count=5,
+        water_count=2,
+        systems=("food", "water", "shelter", "hazard-permanent", "hazard-patrol", "seasons"),
     ),
 }

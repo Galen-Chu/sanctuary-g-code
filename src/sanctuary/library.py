@@ -20,10 +20,15 @@ from .systems import validate_composition
 
 
 def _theory(preset: Preset) -> dict[str, float]:
-    return {
+    theory = {
         "water_gap_center": poisson_median_nearest((preset.width - 4) * (preset.height - 4), preset.water_count),
         "hazard_coverage_center": expected_hazard_coverage(preset),
     }
+    if "seasons" in preset.systems:
+        # The cycle means exactly 1.0 (systems._plan_seasons) — a design
+        # constant, not a band. Reported so index consumers see it.
+        theory["season_mean_multiplier"] = 1.0
+    return theory
 
 
 def _archetype_entry(preset: Preset) -> dict[str, object]:
@@ -46,6 +51,11 @@ def _archetype_entry(preset: Preset) -> dict[str, object]:
             "min_food_gap": preset.min_food_gap,
             "min_water_gap": preset.min_water_gap,
             "hazard_clearance": preset.hazard_clearance,
+            "terrain_scale": preset.terrain_scale,
+            "impassable_threshold": preset.impassable_threshold,
+            "season_cycle_h": preset.season_cycle_h,
+            "season_count": preset.season_count,
+            "season_amplitude": preset.season_amplitude,
         },
         "theory": _theory(preset),
         "reproduce": f"sanctuary --seed <seed> --preset {preset.name}",
