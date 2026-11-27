@@ -149,8 +149,7 @@ PRESETS: dict[str, Preset] = {
     "meadow-seasons": Preset(
         name="meadow-seasons",
         description=(
-            "Meadow under a 96 h seasonal cycle: regrowth swings 1 ± 0.5 from "
-            "winter's leanest phase to summer's peak"
+            "Meadow under a 96 h seasonal cycle: regrowth swings 1 ± 0.5 from winter's leanest phase to summer's peak"
         ),
         width=20.0,
         height=20.0,

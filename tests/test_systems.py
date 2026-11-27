@@ -22,14 +22,18 @@ CLASSIC = ("food", "water", "shelter", "hazard-permanent", "hazard-patrol")
 
 
 def test_registry_matches_canonical_order() -> None:
-    assert tuple(SYSTEMS) == CANONICAL_ORDER == (
-        "terrain",
-        "food",
-        "water",
-        "shelter",
-        "hazard-permanent",
-        "hazard-patrol",
-        "seasons",
+    assert (
+        tuple(SYSTEMS)
+        == CANONICAL_ORDER
+        == (
+            "terrain",
+            "food",
+            "water",
+            "shelter",
+            "hazard-permanent",
+            "hazard-patrol",
+            "seasons",
+        )
     )
 
 
@@ -135,8 +139,8 @@ def test_season_cycle_starts_lean_peaks_and_means_one() -> None:
     assert [s.name for s in world.seasons] == ["winter", "spring", "summer", "autumn"]
     multipliers = [s.regrow_multiplier for s in world.seasons]
     a = PRESETS["meadow-seasons"].season_amplitude
-    assert math.isclose(min(multipliers), 1.0 - a, abs_tol=1e-6)   # winter
-    assert math.isclose(max(multipliers), 1.0 + a, abs_tol=1e-6)   # summer
+    assert math.isclose(min(multipliers), 1.0 - a, abs_tol=1e-6)  # winter
+    assert math.isclose(max(multipliers), 1.0 + a, abs_tol=1e-6)  # summer
     durations = [s.duration_h for s in world.seasons]
     assert math.isclose(sum(durations), PRESETS["meadow-seasons"].season_cycle_h)
     weighted = sum(m * d for m, d in zip(multipliers, durations, strict=True)) / sum(durations)

@@ -167,9 +167,7 @@ def format_fingerprint(fp: Fingerprint, preset: Preset) -> str:
         f" band [{clo * center_cov:.3f}, {chi * center_cov:.3f}]",
     ]
     if fp.impassable_fraction_mean is not None:
-        lines.append(
-            f"  impassable fraction    {fp.impassable_fraction_mean:7.3f}  reported, no theory band yet"
-        )
+        lines.append(f"  impassable fraction    {fp.impassable_fraction_mean:7.3f}  reported, no theory band yet")
     return "\n".join(lines)
 
 
@@ -206,7 +204,5 @@ def fingerprint(seed: int, preset: Preset, count: int = 100) -> Fingerprint:
         shelter_food_median=median(shelter_food),
         shelter_water_median=median(shelter_water),
         hazard_coverage_mean=sum(coverages) / len(coverages),
-        impassable_fraction_mean=(
-            sum(impassable) / len(impassable) if impassable is not None else None
-        ),
+        impassable_fraction_mean=(sum(impassable) / len(impassable) if impassable is not None else None),
     )
